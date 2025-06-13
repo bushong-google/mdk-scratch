@@ -1,0 +1,89 @@
+---
+name: Event Base Alerting System Build and Push
+run-name: >
+  Build and Push Event Base Alerting System image on
+  ${{ inputs.project_id }}, ${{ inputs.environment }} environment.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy to
+        type: choice
+        options:
+          - train
+          - stage
+          - prod
+      project_id:
+        description: Which project to deploy the alerting service on
+        type: string
+
+jobs:
+  build-publish-docker-image:
+    runs-on: [self-hosted, onprem-k8s-arc, dind, enterprise, lnx-amd64]
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      - name: Google Auth (2lw)
+        id: auth-2lw
+        if: contains(inputs.project_id, 'hca-dsa-2lw')
+        uses: "google-github-actions/auth@v1.3.0"
+        with:
+          token_format: "access_token"
+          workload_identity_provider: "${{ secrets.WIF_PROVIDER_2LW }}"
+          service_account: "fe-gh-automation-sa@${{ inputs.project_id }}.iam.gserviceaccount.com"
+
+      - name: Google Auth
+        id: auth
+        if: '!contains(inputs.project_id, ''hca-dsa-2lw'')'
+        uses: "google-github-actions/auth@v1.3.0"
+        with:
+          token_format: "access_token"
+          workload_identity_provider: "${{ secrets.GLOBAL_WIF_PROVIDER }}"
+          service_account: "gh-automation@${{ inputs.project_id }}.iam.gserviceaccount.com"
+
+      - name: Configure Docker for gcloud
+        run: gcloud auth configure-docker us-docker.pkg.dev
+
+      - name: Create tag with branch name (2lw)
+        shell: bash
+        if: contains(inputs.project_id, 'hca-dsa-2lw')
+        env:
+          TRAIN_REGISTRY: "hca-dsa-2lw-train-docker-repo-13d6cf"
+          PROD_REGISTRY: "hca-dsa-2lw-prod-docker-repo-bb2300"
+        run: |
+            if [ ${{ inputs.environment || 'train' }} = "train" ]; then
+              registry_name=$TRAIN_REGISTRY
+            else
+              registry_name=$PROD_REGISTRY
+            fi
+            branch_name=$(basename ${{ github.ref_name }})
+            tag="us-docker.pkg.dev/${{ inputs.project_id }}/\
+            ${registry_name}/event-alert-orchestrator/event-alert-orchestrator:${branch_name}-latest"
+            echo "tag=$tag" >> $GITHUB_ENV
+
+      - name: Create tag with branch name
+        shell: bash
+        if: '!contains(inputs.project_id, ''hca-dsa-2lw'')'
+        run: |
+            # TODO: Think about tagging strategy
+            branch_name=$(basename ${{ github.ref_name }})
+            tag="us-docker.pkg.dev/${{ inputs.project_id }}/\
+            alert-orchestrator/alert-orchestrator:latest"
+            echo "tag=$tag" >> $GITHUB_ENV
+
+      - name: Image Build and Push to Artifact Registry
+        id: build-push-event-alert-orchestrator
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          context: .
+          file: event_alerting/Dockerfile
+          tags: ${{ env.tag }}

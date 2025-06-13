@@ -1,0 +1,33 @@
+---
+
+name: Validate Infra Config
+
+on:
+  pull_request:
+    branches:
+      - '**'
+    paths:
+      - ".github/infra_config.yml"
+
+jobs:
+  validate-config:
+    runs-on: [self-hosted, onprem-k8s-arc, lnx-amd64]
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Validate YAML Structure
+        run: |
+          python3 -c "import yaml; yaml.safe_load(open('.github/infra_config.yml'))"
+        shell: bash
+
+      - name: Check image_tag exists
+        run: |
+          tag=$(python3 -c "import yaml; d=yaml.safe_load(open('.github/infra_config.yml')); print(d['services']['my-service']['image_tag'])")
+          if [[ -z "$tag" ]]; then
+            echo "image_tag is missing or empty"
+            exit 1
+          fi
+          echo "Found image_tag: $tag"
+        shell: bash

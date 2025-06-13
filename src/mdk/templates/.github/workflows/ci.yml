@@ -1,0 +1,66 @@
+---
+name: AI Platform Ops CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  file-changes:
+    runs-on: [self-hosted, onprem-k8s-arc, lnx-amd64]
+    outputs:
+      event_alerting: ${{ steps.filter.outputs.event_alerting }}
+      pipeline_executor: ${{ steps.filter.outputs.pipeline_executor }}
+      webex_alerting: ${{ steps.filter.outputs.webex_alerting }}
+      ai_logger: ${{ steps.filter.outputs.ai_logger }}
+      monitoring_agent: ${{ steps.filter.outputs.monitoring_agent }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Detect Changes
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            event_alerting:
+              - 'event_alerting/**'
+            pipeline_executor:
+              - 'pipeline_executor/**'
+            webex_alerting:
+              - 'webex_alerting/**'
+            ai_logger:
+              - 'ai_logger/**'
+            monitoring_agent:
+              - 'monitoring_agent/**'
+
+  event_alerting:
+    needs: file-changes
+    if: ${{ needs.file-changes.outputs.event_alerting == 'true' }}
+    uses: ./.github/workflows/event_alerting_ci.yml
+
+  pipeline_executor:
+    needs: file-changes
+    if: ${{ needs.file-changes.outputs.pipeline_executor == 'true' }}
+    uses: ./.github/workflows/pipeline_executor_ci.yml
+
+  webex_alerting:
+    needs: file-changes
+    if: ${{ needs.file-changes.outputs.webex_alerting == 'true' }}
+    uses: ./.github/workflows/webex_alerting_ci.yml
+
+  ai_logger:
+    needs: file-changes
+    if: ${{ needs.file-changes.outputs.ai_logger == 'true' }}
+    uses: ./.github/workflows/logger_ci.yml
+
+  monitoring_agent:
+    needs: file-changes
+    if: ${{ needs.file-changes.outputs.monitoring_agent == 'true' }}
+    uses: ./.github/workflows/monitoring_agent_ci.yml

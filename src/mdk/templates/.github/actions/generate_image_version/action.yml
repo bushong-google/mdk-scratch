@@ -1,0 +1,20 @@
+---
+name: "Generate Image Version"
+description: >
+  Generates a version tag for Docker images based on
+  date and Git commit SHA.
+
+outputs:
+  image_version:
+    description: "Generated image version (YYYYMMDD-HHMM-shortSHA)"
+    value: ${{ steps.set-version.outputs.image_version }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate Image Version
+      id: set-version
+      shell: bash
+      run: |
+        chmod +x ${{ github.action_path }}/entrypoint.sh
+        ${{ github.action_path }}/entrypoint.sh

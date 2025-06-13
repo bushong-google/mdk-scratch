@@ -1,0 +1,23 @@
+---
+name: Pipeline Executor CI/CD
+
+on:
+  workflow_call:
+
+jobs:
+  code_checks:
+    uses: ./.github/workflows/code_checks.yml
+    with:
+      service_name: "pipeline_executor"
+
+  # build-and-push:
+  #   needs: code_checks
+  #   uses: ./.github/workflows/docker_build_ci.yml
+  #   with:
+  #     gcp_project_id: "${{ secrets.GCP_PROJECT_ID }}"
+  #     gcr_region: "gcr.io"
+  #     docker_image: "pipeline_executor"
+  #     dockerfile_path: "pipeline_executor/Dockerfile"
+  #     deploy: "true"
+  #   secrets:
+  #     gcp_sa_key: "${{ secrets.GCP_SA_KEY }}"

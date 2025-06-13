@@ -1,0 +1,85 @@
+---
+name: "Version Bump"
+description: >-
+  Automatically bumps the version in pyproject.toml based
+  on the provided release type.
+
+inputs:
+  service_name:
+    description: >-
+      "Name of the service (event_alerting, pipeline_executor,
+      webex_alerting)."
+    required: true
+  release-type:
+    description: "Type of release (major, minor, patch)."
+    required: false
+    default: "patch"
+  github-token:
+    description: "GitHub token for PR creation."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check Out Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Run Version Bump Script
+      shell: bash
+      run: |
+        pip install toml
+        python ${{ github.action_path }}/bump_version.py \
+          ${{ inputs.service_name }} \
+          ${{ inputs.release-type }}
+
+    - name: Commit and Push Version Update
+      shell: bash
+      run: |
+        git config --global user.email \
+          "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "GitHub Actions"
+
+        PYPROJECT_MODIFIED=$(git status --porcelain | grep -c '${{ inputs.service_name }}/pyproject.toml' || echo 0)
+        if [ $PYPROJECT_MODIFIED -eq 1 ]; then
+          echo "Stashing local changes"
+          git stash push -m "Local changes to pyproject.toml"
+          echo "Fetch"
+          git fetch origin
+          echo "Switching from detached HEAD state to ${BRANCH_NAME}"
+          git checkout ${BRANCH_NAME}
+          echo "Pull"
+          git pull -X theirs origin ${BRANCH_NAME}
+          echo "Pop stash"
+          git stash pop
+          echo "Add"
+          git add ${{ inputs.service_name }}/pyproject.toml
+          echo "Commit"
+          git commit -m "Automated badge update of ${{ inputs.service_name }} version"
+          echo "Pull again"
+          git pull -X ours origin ${BRANCH_NAME}
+          echo "Push"
+          git push origin ${BRANCH_NAME}
+        else
+          echo "No changes to commit."
+        fi
+
+
+#    - name: Create Pull Request
+#      shell: bash
+#      env:
+#        GITHUB_TOKEN: ${{ inputs.github-token }}
+#      run: |
+#        BRANCH_NAME="release-version-update-${{ inputs.service_name }}"
+#
+#        # Check if GitHub CLI (`gh`) is installed
+#        if ! command -v gh &> /dev/null; then
+#          echo "GitHub CLI (gh) is not installed. Skipping PR creation."
+#          exit 1
+#        fi
+#
+#        gh pr create --base main --head "$BRANCH_NAME" \
+#          --title "Version Bump: ${{ inputs.service_name }}" \
+#          --body "Automated version bump for ${{ inputs.service_name }}. \
+#          Please review and merge."

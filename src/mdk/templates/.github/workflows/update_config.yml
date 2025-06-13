@@ -1,0 +1,92 @@
+---
+
+name: Sync Infra Config to Terraform Repo
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - ".github/infra_config.yml"
+  pull_request:
+    branches:
+      - '**'
+    paths:
+      - ".github/infra_config.yml"
+
+jobs:
+  update-terraform-config:
+    runs-on: [self-hosted, onprem-k8s-arc, lnx-amd64]
+
+    env:
+      TF_REPO: git@github.com:hca-enterprise/hca-dsa-ooe-aiplatform.git
+      TF_REPO_OWNER: hca-enterprise
+      TF_REPO_NAME: hca-dsa-ooe-aiplatform
+
+    steps:
+      - name: Checkout App Repo
+        uses: actions/checkout@v4
+
+      - name: Install yq (v4.x)
+        run: |
+          YQ_VERSION="v4.40.5"
+          mkdir -p "$HOME/bin"
+          wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64 -O "$HOME/bin/yq"
+          chmod +x "$HOME/bin/yq"
+          echo "$HOME/bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Parse Image Tag
+        id: read_config
+        run: |
+          echo "IMAGE_TAG=$(yq '.services.my-service.image_tag' .github/infra_config.yml)" >> $GITHUB_ENV
+          echo "Parsed image_tag=${IMAGE_TAG}"
+        shell: bash
+
+      - name: Setup SSH for Terraform Repo
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          echo "${{ secrets.TF_REPO_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+        shell: bash
+
+      - name: Create Dynamic Branch Name
+        run: |
+          TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+          echo "BRANCH_NAME=feature/config-sync-${TIMESTAMP}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Clone Terraform Repo
+        run: |
+          git clone "$TF_REPO"
+          cd "$TF_REPO_NAME"
+          git checkout -b "$BRANCH_NAME"
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+        shell: bash
+
+
+      - name: Update tf.auto.tfvars
+        run: |
+          cd "$TF_REPO_NAME"
+          echo "image_tag = \"${IMAGE_TAG}\"" > tf.auto.tfvars
+
+          echo "Final tf.auto.tfvars content:"
+          cat tf.auto.tfvars
+
+          git add tf.auto.tfvars
+          git commit -m "Sync image_tag from infra_config"
+          git push origin "$BRANCH_NAME"
+        shell: bash
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ env.TF_REPO_OWNER }}/${{ env.TF_REPO_NAME }}
+          branch: ${{ env.BRANCH_NAME }}
+          title: "Sync image_tag to tf.auto.tfvars"
+          body: "This PR updates the image_tag value in tf.auto.tfvars as synced from .github/infra_config.yml"
+          base: train

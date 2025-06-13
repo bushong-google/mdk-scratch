@@ -1,0 +1,57 @@
+---
+name: "Docker Build Action"
+description: >-
+  Builds a Docker image given an image tag, build context,
+  and Dockerfile location.
+
+inputs:
+  image_tag:
+    description: >-
+      The full image tag for the Docker build
+      (e.g., gcr.io/my-project/my-app:latest).
+    required: true
+  build_context:
+    description: "The Docker build context (default: current directory)."
+    required: false
+    default: "."
+  dockerfile:
+    description: "The location of the Dockerfile (relative path)."
+    required: true
+  build_args:
+    description: >-
+      Optional build arguments (comma-separated,
+      e.g., 'ARG1=value1,ARG2=value2').
+    required: false
+    default: ""
+  platform:
+    description: "Optional target platform (e.g., linux/amd64, linux/arm64)."
+    required: false
+    default: "linux/amd64"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set Up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Verify Buildx Installation
+      shell: bash
+      run: |
+        echo "Checking if Docker Buildx is available..."
+        docker buildx version
+        docker buildx ls
+
+    - name: Ensure `entrypoint.sh` is executable
+      run: chmod +x ${{ github.action_path }}/entrypoint.sh
+      shell: bash
+
+    - name: Run Docker Build
+      shell: bash
+      env:
+        IMAGE_TAG: ${{ inputs.image_tag }}
+        BUILD_CONTEXT: ${{ inputs.build_context }}
+        DOCKERFILE: ${{ inputs.dockerfile }}
+        BUILD_ARGS: ${{ inputs.build_args }}
+        PLATFORM: ${{ inputs.platform }}
+        USE_CACHE: ${{ inputs.use_cache }}
+      run: ${{ github.action_path }}/entrypoint.sh

@@ -1,0 +1,91 @@
+---
+name: Publish to Nexus Repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: >
+          Name of the service to publish (event_alerting,
+          webex_alerting, pipeline_executor, ai_logger)
+        required: true
+        type: string
+      version:
+        description: "Version number to publish"
+        required: true
+        type: string
+  # pull_request:
+  #   branches: [develop, main]
+  #   types: [opened, reopened, synchronize]
+  # push:
+  #   branches: [develop, main]
+
+jobs:
+  build-and-publish:
+    runs-on: [self-hosted, onprem-k8s-arc, lnx-amd64]
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc
+
+      - name: Install UV (Universal Virtualenv)
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Set Up Virtual Environment
+        run: |
+          uv venv .venv
+          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+
+      - name: Install Build Tools
+        run: uv pip install twine
+
+      - name: Verify Version File
+        run: |
+          # If pyproject-info is not installed, install it
+          if ! command -v pyproject-info &> /dev/null; then
+            uv tool install pyproject-parser[cli]
+          fi
+          # Get the latest version from the pyproject.toml file
+          git pull
+          echo "VERSION=$(pyproject-info -f ${{ inputs.service_name }}/pyproject.toml project.version)" >> $GITHUB_ENV
+
+      - name: Build the Python Package (UV)
+        run: |
+          cd ${{ inputs.service_name }}
+          uv build
+          cd ..
+
+      - name: Verify Build Artifacts
+        run: |
+          if [ ! -d "${{ inputs.service_name }}/dist" ] ||
+             [ -z "$(ls -A ${{ inputs.service_name }}/dist)" ]; then
+            echo "Build failed: No artifacts found in dist/."
+            exit 1
+          fi
+
+      - name: Publish to Nexus (UV)
+        env:
+          TWINE_USERNAME: ${{ secrets.MY_NEXUS_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.MY_NEXUS_PASSWORD }}
+        run: |
+          uv run twine upload --repository-url \
+            https://repos.medcity.net/repository/aiplatformops-repo/ \
+            ${{ inputs.service_name }}/dist/*
+
+      - name: Verify Nexus Package Upload
+        run: |
+          uv add ${{ inputs.service_name }}==${{ inputs.VERSION }} \
+            --index https://${{ secrets.MY_NEXUS_USERNAME }}:${{ secrets.MY_NEXUS_PASSWORD }}@repos.medcity.net/repository/aiplatformops-repo/simple \
+            --index https://pypi.org/simple
+          uv run python -c "import ${{ inputs.service_name }}"

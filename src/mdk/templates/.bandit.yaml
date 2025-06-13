@@ -1,0 +1,18 @@
+# Bandit configuration file
+exclude_paths:
+    - tests/
+    - '**/tests/'
+    - '**/test/'
+
+skips:
+    - B101
+
+ignore_nosec: true
+
+# Optional severity settings
+baseline_severity: medium
+
+# You can add specific profiles or rules as needed
+# profiles:
+#     security:
+#         include_ids: ['B201', 'B301']

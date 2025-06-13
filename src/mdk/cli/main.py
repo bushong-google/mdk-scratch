@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+
+"""Manage various parts of the MLOps pipeline, including generating a skaffolding of
+template files and running a pipeline job.
+"""
+
+import sys
+
+
+def main():
+    """This is invoked when the script is called from the command line."""
+
+    # Get our command line arguments.
+    clargs = parseCommandLine(sys.argv)
+
+    # Call the function which is mapped to the relevant subparser.
+    args = vars(clargs)
+    func = args.pop('func')
+    func(**args)
+
+    #args.func(args)
+
+
+def parseCommandLine(argv):
+    """Get command line arguments and options."""
+    import mdk.cli
+
+    import argparse
+
+    # Top-level parser:
+    parser = argparse.ArgumentParser(
+        prog="mdk",
+        description=__doc__,
+    )
+    subparsers = parser.add_subparsers(required=True)
+
+    # This pattern of using set_defaults() to set a callback comes from the Python docs
+    #   (see the func=foo example):
+    #   https://docs.python.org/3/library/argparse.html#other-utilities
+
+    # mdk init:
+    parser_init = subparsers.add_parser(
+        "init",
+        help="Populate directory with template files",
+    )
+    parser_init.set_defaults(func=mdk.cli.init.init)
+    parser_init.add_argument(
+        '--overwrite',
+        action='store_true',
+        help=(
+            'If a file already exists, overwrite it with the template version'
+            'default is to skip it)'
+        ),
+    )
+
+    # mdk run:
+    parser_run = subparsers.add_parser(
+        "run",
+        help="Run a Vertex Pipeline job, using the mdk_run.yml file",
+    )
+    parser_run.set_defaults(func=mdk.cli.run.run)
+
+    return parser.parse_args(argv[1:])
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

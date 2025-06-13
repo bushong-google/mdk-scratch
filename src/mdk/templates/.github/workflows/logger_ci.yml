@@ -1,0 +1,11 @@
+---
+    name: Logger CI
+
+    on:
+      workflow_call:
+
+    jobs:
+      code_checks:
+        uses: ./.github/workflows/code_checks.yml
+        with:
+          service_name: "ai_logger"

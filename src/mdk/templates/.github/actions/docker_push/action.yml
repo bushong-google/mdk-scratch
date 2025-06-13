@@ -1,0 +1,45 @@
+---
+name: "Docker Push Action"
+description: >
+  Pushes a Docker image to a specified repository.
+
+inputs:
+  image_tag:
+    description: >
+      The full image tag for the Docker push
+      (e.g., gcr.io/my-project/my-app:latest).
+    required: true
+  remote_repository:
+    description: >
+      The remote repository where the image will be pushed.
+    required: true
+  registry_auth:
+    description: >
+      Optional authentication command
+      (e.g., 'gcloud auth configure-docker').
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Authenticate with Registry (if provided)
+      if: inputs.registry_auth != ''
+      shell: bash
+      env:
+        REGISTRY_AUTH: ${{ inputs.registry_auth }}
+      run: |
+        echo "Running authentication for registry..."
+        eval "$REGISTRY_AUTH"
+
+    - name: Ensure `entrypoint.sh` is executable
+      run: chmod +x ${{ github.action_path }}/entrypoint.sh
+      shell: bash
+
+    - name: Run Docker Push with Logging & Retry
+      shell: bash
+      env:
+        IMAGE_TAG: ${{ inputs.image_tag }}
+        REMOTE_REPO: ${{ inputs.remote_repository }}
+        REGISTRY_TYPE: ${{ inputs.registry_type }}
+      run: ${{ github.action_path }}/entrypoint.sh

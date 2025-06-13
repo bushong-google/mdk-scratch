@@ -1,0 +1,11 @@
+---
+name: Event Alerting CI/CD
+
+on:
+  workflow_call:
+
+jobs:
+  code_checks:
+    uses: ./.github/workflows/code_checks.yml
+    with:
+      service_name: "event_alerting"

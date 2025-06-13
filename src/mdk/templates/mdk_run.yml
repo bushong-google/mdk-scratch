@@ -1,0 +1,40 @@
+name: "Advanced MLOps Project"
+description: "Comprehensive MLOps project with retraining and monitoring."
+version: "1.1.0"
+
+pipeline:
+  configuration:
+    path: "config.json"
+  preprocessing:
+    path: "src/preprocess.py"
+    description: "Data cleaning, feature engineering."
+  training:
+    path: "src/train.py"
+    description: "Model training workflow. "
+    dependencies: ["preprocessing"]
+  evaluation:
+    path: "src/evaluate.py"
+    description: "Model performance evaluation."
+    dependencies: ["training"]
+  deployment:
+    path: "src/deploy.py"
+    description: "Model deployment script."
+    dependencies: ["evaluation"]
+
+prediction:
+  type: "real-time"
+  endpoint: "/predict"
+  model_path: "models/latest_model"
+
+monitoring:
+  metrics:
+    - "accuracy"
+    - "latency"
+    - "data_drift"
+  alerting: "webex"
+
+retraining:
+  trigger: "data_drift"
+  frequency: "weekly"
+  retrain_script: "src/retrain.py"
+  dependencies: ["preprocessing", "training"]

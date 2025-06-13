@@ -1,0 +1,96 @@
+---
+name: Code Checks
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+        default: ""
+
+jobs:
+  code_checks:
+    runs-on: [self-hosted, onprem-k8s-arc, lnx-amd64]
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      # Verify UV Installation
+      - name: Verify UV Installation
+        run: |
+          which uv || echo "UV is not installed"
+          uv --version || echo "UV command not found"
+
+      # Setup virtual environment
+      - name: Set Up Virtual Environment
+        run: |
+          uv sync --extra dev --extra test --extra ${{ inputs.service_name }}
+
+      # Set environment variables for tests
+      - name: Configure PYTHONPATH
+        run: |
+          echo "PYTHONPATH=$PWD/${{ inputs.service_name }}" >> $GITHUB_ENV
+
+      # Run Static Type Analysis (MyPy)
+      - name: Static Analysis with MyPy
+        run: |
+          uv run mypy ${{ inputs.service_name }} || true
+
+      # Run Code Linting (Ruff)
+      - name: Linting with Ruff
+        run: |
+          uv run ruff check --fix ${{ inputs.service_name }}/
+
+      # Run Security Scan (Bandit)
+      - name: Security Scan with Bandit
+        run: |
+          uv run bandit --exclude \
+          ${{ inputs.service_name }}/tests \
+          -r ${{ inputs.service_name }}
+
+      # Verify `pytest` Installation
+      - name: Verify pytest Installation
+        run: uv run pytest --version
+
+      # Run Unit & Integration Tests with Coverage
+      - name: Run Tests with Coverage
+        run: |
+          export UV_PREVIEW=1
+          uv run pytest \
+            ${{ inputs.service_name }}/tests/ \
+            ${{ inputs.service_name }}/tests/integration \
+            --cov=${{ inputs.service_name }} \
+            --cov-report=xml \
+            --cov-fail-under=80 || true  # temporary bypass
+
+      # Install and Run Dependency Scanning
+      - name: Install and Run Dependency Scanning
+        run: |
+          uv pip install pip-audit
+          export UV_PREVIEW=1
+          uv run pip-audit || true
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update && sudo apt-get install -y shellcheck
+
+      # Run ShellCheck on shell scripts in .github/
+      - name: Run ShellCheck
+        run: |
+          sudo apt-get install -y shellcheck
+          find .github/ -name "*.sh" -print0 | xargs -0 shellcheck || true

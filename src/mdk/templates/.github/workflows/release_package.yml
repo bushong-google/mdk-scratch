@@ -1,0 +1,109 @@
+---
+name: Package Release Workflow
+
+on:
+  push:
+    branches:
+      - develop
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: >-
+          Name of the service to release (event_alerting,
+          pipeline_executor, webex_alerting)
+        required: true
+        type: string
+      release-type:
+        type: choice
+        description: "Type of release (major, minor, patch)"
+        required: true
+        options:
+          - major
+          - minor
+          - patch
+      small_description:
+        type: string
+        description: "Description of the release for the changelog"
+        required: true
+
+jobs:
+  release-service:
+    runs-on: [self-hosted, onprem-k8s-arc, lnx-amd64]
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Set Up Virtual Environment
+        run: |
+          uv venv .venv
+          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+
+      - name: Install Dependencies
+        run: uv sync --extra test
+
+      - name: Run Unit Tests
+        run: uv run pytest ${{ inputs.service_name }}/tests/
+
+      - name: Security Scan with Bandit
+        run: uv run bandit --exclude ${{ inputs.service_name }}/tests -r ${{ inputs.service_name }}/
+
+      - name: Generate Changelog
+        run: |
+          if [ ! -f CHANGELOG.md ]; then
+            touch CHANGELOG.md
+          fi
+          uv run cz changelog \
+            --increment "${{ inputs.release-type || 'patch' }}" || \
+            echo "Commitizen not configured, skipping changelog."
+
+      - name: Bump Version
+        uses: ./.github/actions/bump_version
+        with:
+          service_name: ${{ inputs.service_name }}
+          release-type: ${{ inputs.release-type }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install `pyproject-info`
+        run: uv tool install pyproject-parser[cli]
+
+
+      - name: Verify Updated Version
+        id: version_check
+        run: |
+          uv tool install pyproject-parser[cli]
+          NEW_VERSION=$(pyproject-info -f ${{ inputs.service_name }}/pyproject.toml project.version)
+          echo "Updated version: $NEW_VERSION"
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(pyproject-info -f ${{ inputs.service_name }}/pyproject.toml project.version)
+          gh release create "v$VERSION" \
+            -t "Release v$VERSION" \
+            -n "${{ inputs.small_description }}"
+
+  publish-nexus:
+    needs: release-service
+    uses: ./.github/workflows/publish_nexus.yml
+    with:
+      service_name: ${{ inputs.service_name }}
+      version: ${{ needs.release-service.outputs.version }}
+    secrets: inherit
