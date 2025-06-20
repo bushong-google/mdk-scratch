@@ -1,0 +1,7 @@
+# Terraform
+terraform/.terraform*
+*.tfstate
+*.tfstate.backup
+
+# Pickle files.
+*.pkl

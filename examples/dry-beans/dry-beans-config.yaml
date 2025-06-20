@@ -1,0 +1,6 @@
+project_id: "pso-hca-mlops"
+dataset_id: "dry_beans"
+region: "us-central1"
+bucket: "pso-hca-mlops-data"
+csv: "Dry_Beans_Dataset.csv"
+table: "features"
