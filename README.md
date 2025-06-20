@@ -2,7 +2,7 @@
 
 (This is currently a stub README.)
 
-The following will create and active a virtual environment and then
+The following will create and activate a virtual environment and then
 build a wheel file:
 
 ```
