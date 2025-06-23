@@ -2,12 +2,22 @@
 
 # set -x
 
-project_id=pso-hca-mlops
-dataset_id=dry_beans
-region=us-central1
-bucket=${project_id}-data
-csv=Dry_Beans_Dataset.csv
-table=features
+# Read our config file.
+
+conf_yaml=dry-beans-config.yaml
+
+project_id=$(yq .project_id < $conf_yaml)
+dataset_id=$(yq .dataset_id < $conf_yaml)
+region=$(yq .region < $conf_yaml)
+bucket=$(yq .bucket < $conf_yaml)
+csv=$(yq .csv < $conf_yaml)
+table=$(yq .table < $conf_yaml)
+key_file=$(yq .key_file < $conf_yaml)
+
+
+# Activate our service account.
+gcloud auth activate-service-account $svc_acct --key-file $key_file\
+    || exit $?
 
 echo "Checking whether dataset exists: $project_id:$dataset_id"
 bq --location $region ls --dataset_id $project_id:$dataset_id \
