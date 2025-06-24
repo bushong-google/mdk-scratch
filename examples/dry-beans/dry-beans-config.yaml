@@ -8,3 +8,5 @@ table: "features"
 #svc_acct: "dry-beans@bushong-exp-2025.iam.gserviceaccount.com"
 svc_acct: "dry-beans"
 key_file: "svc-acct-key.json"
+tf_state_bucket: "bushong-exp-tfstate"
+

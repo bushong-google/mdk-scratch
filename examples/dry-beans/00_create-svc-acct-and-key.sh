@@ -9,7 +9,7 @@ echo gcloud auth login
 echo ""
 
 # Much of this could be run in terraform, but the key creation cannot, so we
-#   just do the service account creation stuff here.
+#   just do the service account creation workflow here.
 
 conf_yaml=dry-beans-config.yaml
 

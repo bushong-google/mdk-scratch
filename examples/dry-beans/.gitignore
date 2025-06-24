@@ -5,3 +5,6 @@ terraform/.terraform*
 
 # Pickle files.
 *.pkl
+
+# Service account key
+svc-acct-key.json
