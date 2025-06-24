@@ -3,7 +3,7 @@
 echo "Before running this script, run the following with an account that has"
 echo "  permission to create service accounts and add roles:"
 echo ""
-echo gcloud auth login
+echo $ gcloud auth login
 echo ""
 
 conf_yaml=dry-beans-config.yaml
@@ -19,7 +19,7 @@ gcloud services enable storage.googleapis.com --project=${project_id} || exit $?
 gcloud storage ls | grep $tf_state_bucket \
     && tf_state_bucket_exists=true || tf_state_bucket_exists=false
 
-# Create a service account, if it does not exist.
+# Create a bucket, if it does not exist.
 if [ $tf_state_bucket_exists == true ] ; then
     echo "Bucket already exists: $tf_state_bucket"
 else
@@ -36,6 +36,10 @@ gcloud storage buckets update gs://${tf_state_bucket} --versioning || exit $?
 # Verify bucket creation
 gcloud storage ls || exit $?
 
+# Migrate the TF state back end.
+cd terraform || exit $?
 
+terraform init
 
+# terraform apply -target=
 
