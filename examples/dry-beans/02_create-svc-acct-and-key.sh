@@ -52,6 +52,7 @@ fi
 
 for role in \
         bigquery.user \
+        storage.objectUser \
         ; do
     echo "Adding role: $role"
     #gcloud iam service-accounts add-iam-policy-binding \

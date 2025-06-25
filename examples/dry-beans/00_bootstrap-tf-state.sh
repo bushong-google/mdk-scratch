@@ -16,7 +16,7 @@ echo "Enabling API: storage.googleapis.com"
 gcloud services enable storage.googleapis.com --project=${project_id} || exit $?
 
 # Check whether the TF state bucket already exists:
-gcloud storage ls | grep $tf_state_bucket \
+gcloud storage ls | grep $tf_state_bucket 2>/dev/null\
     && tf_state_bucket_exists=true || tf_state_bucket_exists=false
 
 # Create a bucket, if it does not exist.
@@ -38,8 +38,7 @@ gcloud storage ls || exit $?
 
 # Migrate the TF state back end.
 cd terraform || exit $?
+terraform init || exit $?
 
-terraform init
 
-# terraform apply -target=
 
