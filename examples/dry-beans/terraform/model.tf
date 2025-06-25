@@ -4,7 +4,7 @@
 # GCP APIs:
 
 variable "model_gcp_service_list" {
-  description = "GCP APIs to enable on the project"
+  description = "GCP APIs to enable in order to run the model"
   type        = list(string)
   default = [
     "storage-api.googleapis.com",

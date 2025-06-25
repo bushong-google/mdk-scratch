@@ -5,6 +5,10 @@ echo "  permission to create service accounts and add roles:"
 echo ""
 echo $ gcloud auth login
 echo ""
+echo "... and:"
+echo ""
+echo $ gcloud auth application-default login
+echo ""
 
 # conf_yaml=dry-beans-config.yaml
 
