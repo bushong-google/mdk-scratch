@@ -1,6 +1,6 @@
 """Fit the dry beans model to a a decision tree model for demonstration purposes."""
 
-CONFIG_FILENAME = "model_config.yaml"
+CONFIG_FILENAME = "dry-beans-config.yaml"
 MODEL_ARTIFACT_FILENAME = "dt_model.pkl"
 
 
