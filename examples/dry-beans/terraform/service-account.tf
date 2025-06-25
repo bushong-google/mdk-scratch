@@ -11,8 +11,9 @@ variable "sa_role_list" {
   description = "GCP roles to add to the service account"
   type        = list(string)
   default = [
-    "roles/bigquery.user",
-    "roles/storage.objectUser"
+    "roles/bigquery.dataOwner",
+    "roles/storage.objectUser",
+    "roles/bigquery.jobUser"
   ]
 }
 

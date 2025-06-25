@@ -14,13 +14,20 @@ conf_yaml=dry-beans-config.yaml
 
 project_id=$(yq .project_id < $conf_yaml)
 region=$(yq .region < $conf_yaml)
-tf_state_bucket=$(yq .tf_state_bucket < $conf_yaml)
+
+if [ -z $project_id ] ; then
+    echo "Error reading config: $conf_yaml"
+    exit -1
+fi
+
+# Note: If you change this, it should be consistent with tf-state-bucket.tf .
+tf_state_bucket=${project_id}-tfstate
 
 echo "Enabling API: storage.googleapis.com"
 gcloud services enable storage.googleapis.com --project=${project_id} || exit $?
 
 # Check whether the TF state bucket already exists:
-gcloud storage ls | grep $tf_state_bucket 2>/dev/null\
+gcloud storage ls 2> /dev/null | grep $tf_state_bucket 2>/dev/null \
     && tf_state_bucket_exists=true || tf_state_bucket_exists=false
 
 # Create a bucket, if it does not exist.

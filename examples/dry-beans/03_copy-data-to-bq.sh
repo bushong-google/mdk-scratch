@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# set -x
+set -x
 
 # Read our config file.
 
@@ -14,13 +14,18 @@ csv=$(yq .csv < $conf_yaml)
 table=$(yq .table < $conf_yaml)
 key_file=$(yq .key_file < $conf_yaml)
 
+if [ -z $project_id ] ; then
+    echo "Error reading config: $conf_yaml"
+    exit -1
+fi
+
 
 # Activate our service account.
-gcloud auth activate-service-account $svc_acct --key-file $key_file\
+gcloud auth activate-service-account $svc_acct --key-file $key_file \
     || exit $?
 
 echo "Checking whether dataset exists: $project_id:$dataset_id"
-bq --location $region ls --dataset_id $project_id:$dataset_id 2>/dev/null \
+bq --location $region ls --dataset_id $project_id:$dataset_id \
     && dataset_exists=true || dataset_exists=false
 
 # Create a dataset, if it does not exist.
