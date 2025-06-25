@@ -5,8 +5,7 @@ region: "us-central1"
 bucket: "bushong-exp-2025-data"
 csv: "Dry_Beans_Dataset.csv"
 table: "features"
-#svc_acct: "dry-beans@bushong-exp-2025.iam.gserviceaccount.com"
 svc_acct: "dry-beans"
 key_file: "svc-acct-key.json"
-tf_state_bucket: "bushong-exp-2025-tfstate"
+
 

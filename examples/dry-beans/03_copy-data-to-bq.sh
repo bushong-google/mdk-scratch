@@ -20,7 +20,7 @@ gcloud auth activate-service-account $svc_acct --key-file $key_file\
     || exit $?
 
 echo "Checking whether dataset exists: $project_id:$dataset_id"
-bq --location $region ls --dataset_id $project_id:$dataset_id \
+bq --location $region ls --dataset_id $project_id:$dataset_id 2>/dev/null \
     && dataset_exists=true || dataset_exists=false
 
 # Create a dataset, if it does not exist.

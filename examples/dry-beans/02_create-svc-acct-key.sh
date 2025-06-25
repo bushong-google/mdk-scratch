@@ -5,7 +5,11 @@ set -x
 echo "Before running this script, run the following with an account that has"
 echo "  permission to create service accounts and add roles:"
 echo ""
-echo gcloud auth login
+echo $ gcloud auth login
+echo ""
+echo "... and:"
+echo ""
+echo $ gcloud auth application-default login
 echo ""
 
 # Much of this could be run in terraform, but the key creation cannot, so we

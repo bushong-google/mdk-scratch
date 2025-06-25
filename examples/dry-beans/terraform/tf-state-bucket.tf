@@ -14,7 +14,6 @@ terraform {
   backend "gcs" {
     bucket     = "bushong-exp-2025-tfstate"
     depends_on = "google_project_service.storage_api"
-    # Will store the default.state file in terraform/state/default.state directory
     # prefix      = "terraform/state"
     # credentials = "./keys.json"
   }
