@@ -21,6 +21,7 @@ def main():
     func(**args)
 
     # args.func(args)
+    return 0
 
 
 def parseCommandLine(argv):
@@ -75,4 +76,4 @@ def parseCommandLine(argv):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(main())

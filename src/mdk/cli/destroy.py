@@ -42,8 +42,7 @@ def destroy(force: bool):
     # Now delete the directories.
     # Sort the paths by length, so that we go through this depth first.  (We
     #   want to delete subdirectories before parent directories.)
-    dirparts = sorted(dirparts, key=lambda x: -len(x))
-    for dirpart in dirparts:
+    for dirpart in sorted(dirparts, key=lambda x: -len(x)):
         dir = pathlib.Path("/".join(dirpart))
         # If the directory exists and is not the root directory, and the
         #   directory is empty, delete the directory.
