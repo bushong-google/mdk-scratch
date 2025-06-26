@@ -5,4 +5,4 @@ starting with a simple model whose features are stored in BigQuery.
 
 The example includes terraform code for setting up the environment.
 
-The full functionality will be described in detail in a file called `Example.ipynb`.
+Instructions to demo the functionality will be described in detail in a file called Example.ipynb.
