@@ -18,4 +18,3 @@ terraform {
     # credentials = "./keys.json"
   }
 }
-

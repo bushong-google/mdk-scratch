@@ -40,12 +40,3 @@ else
         --iam-account $svc_acct@$project_id.iam.gserviceaccount.com \
         || exit $?
 fi
-
-
-
-
-
-
-
-
-

@@ -50,6 +50,3 @@ gcloud storage ls || exit $?
 # Migrate the TF state back end.
 cd terraform || exit $?
 terraform init || exit $?
-
-
-

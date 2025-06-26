@@ -17,10 +17,10 @@ def main():
 
     # Call the function which is mapped to the relevant subparser.
     args = vars(clargs)
-    func = args.pop('func')
+    func = args.pop("func")
     func(**args)
 
-    #args.func(args)
+    # args.func(args)
 
 
 def parseCommandLine(argv):
@@ -44,11 +44,11 @@ def parseCommandLine(argv):
     )
     parser_init.set_defaults(func=mdk.cli.init.init)
     parser_init.add_argument(
-        '--overwrite',
-        action='store_true',
+        "--overwrite",
+        action="store_true",
         help=(
-            'If a file already exists, overwrite it with the template version'
-            'default is to skip it)'
+            "If a file already exists, overwrite it with the template version"
+            "default is to skip it)"
         ),
     )
 
@@ -59,8 +59,8 @@ def parseCommandLine(argv):
     )
     parser_destroy.set_defaults(func=mdk.cli.destroy.destroy)
     parser_destroy.add_argument(
-        '--force',
-        action='store_true',
+        "--force",
+        action="store_true",
         help='Do not stop and ask "Are you sure?"',
     )
 

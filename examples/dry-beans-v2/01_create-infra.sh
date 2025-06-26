@@ -13,6 +13,3 @@ echo ""
 # Migrate the TF state back end.
 cd terraform || exit $?
 terraform apply || exit $?
-
-
-

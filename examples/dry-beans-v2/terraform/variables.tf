@@ -15,4 +15,3 @@ variable "sa_name" {
   type        = string
   default     = "sa_name"
 }
-

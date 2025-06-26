@@ -13,8 +13,13 @@ def destroy(force: bool):
 
     # First ask the user if they're sure they want to destroy all the files.
     if not force:
-        if input('This will delete many files and cannot be undone.  Are you sure?'
-                ' (y/N) ') != 'y':
+        if (
+            input(
+                "This will delete many files and cannot be undone.  Are you sure?"
+                " (y/N) "
+            )
+            != "y"
+        ):
             return
 
     # Find our templates:
@@ -31,20 +36,20 @@ def destroy(force: bool):
             if dest.exists():
                 dest.unlink()
                 _printStatus(dest, "[DELETED]")
-            
+
             dirparts.add(dest.parts[:-1])
 
-    # Now delete the directories.    
+    # Now delete the directories.
     # Sort the paths by length, so that we go through this depth first.  (We
     #   want to delete subdirectories before parent directories.)
     dirparts = sorted(dirparts, key=lambda x: -len(x))
     for dirpart in dirparts:
-        dir = pathlib.Path('/'.join(dirpart))
+        dir = pathlib.Path("/".join(dirpart))
         # If the directory exists and is not the root directory, and the
         #   directory is empty, delete the directory.
-        if (dir.is_dir()) and (dir != '.') and (not os.listdir(dir)):
+        if (dir.is_dir()) and (dir != ".") and (not os.listdir(dir)):
             dir.rmdir()
-            _printStatus(str(dir) + '/', "[DELETED]")
+            _printStatus(str(dir) + "/", "[DELETED]")
 
 
 def _printStatus(

@@ -82,4 +82,3 @@ MANIFEST.in: Makefile
 	echo "include Makefile.in" >> $@
 	echo "include configure.ac" >> $@
 	echo "include configure" >> $@
-

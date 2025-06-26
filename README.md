@@ -11,4 +11,3 @@ source ./venv/bin/activate
 ./configure
 make
 ```
-
