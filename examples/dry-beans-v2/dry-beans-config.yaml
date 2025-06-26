@@ -1,0 +1,10 @@
+project_id: "bushong-exp-2025"
+dataset_id: "dry_beans"
+region: "us-central1"
+bucket: "bushong-exp-2025-data"
+csv: "Dry_Beans_Dataset.csv"
+table: "features"
+svc_acct: "dry-beans"
+key_file: "svc-acct-key.json"
+
+

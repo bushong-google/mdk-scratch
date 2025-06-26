@@ -1,0 +1,20 @@
+[project]
+name = "mdk-dry-beans"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "db-dtypes>=1.4.3",
+    "google-cloud-bigquery>=3.34.0",
+    "ipykernel>=6.29.5",
+    "pandas>=2.3.0",
+    "pip>=25.1.1",
+    "pyyaml>=6.0.2",
+    "scikit-learn>=1.7.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.2.0",
+]
