@@ -1,14 +1,14 @@
 """Generate a skeleton of template files to implement various ML Ops processes."""
 
+import os
 import pathlib
+import shutil
 
 LINE_WIDTH = 80
 
 
 def init(overwrite: bool):
     """Generate a skeleton of template files to implement various ML Ops processes."""
-    import os
-    import shutil
 
     # Find our templates:
     template_dir = (pathlib.Path(__file__).parent / ".." / "templates").resolve()
@@ -19,7 +19,8 @@ def init(overwrite: bool):
             src = pathlib.Path(dirpath) / filename
             dest = "." / src.relative_to(template_dir)
 
-            # If the destination file already exists, and the overwite flag is False, then skip it.
+            # If the destination file already exists, and the overwite flag is
+            #   False, then skip it.
             if (dest.exists()) and (not overwrite):
                 _printStatus(dest, " exists! [SKIPPED]")
 
