@@ -11,6 +11,12 @@ LINE_WIDTH = 80
 def destroy(force: bool):
     """Delete the files that were created in cli.init.init()."""
 
+    # First ask the user if they're sure they want to destroy all the files.
+    if not force:
+        if input('This will delete many files and cannot be undone.  Are you sure?'
+                ' (y/N) ') != 'y':
+            return
+
     # Find our templates:
     template_dir = (pathlib.Path(__file__).parent / ".." / "templates").resolve()
 
@@ -23,7 +29,6 @@ def destroy(force: bool):
 
             # If the destination file exists, delete it.
             if dest.exists():
-                #os.remove(dest)
                 dest.unlink()
                 _printStatus(dest, "[DELETED]")
             
@@ -35,15 +40,15 @@ def destroy(force: bool):
     dirparts = sorted(dirparts, key=lambda x: -len(x))
     for dirpart in dirparts:
         dir = pathlib.Path('/'.join(dirpart))
-        # If the directory is not the root directory, and the directory is
-        #   empty, delete the directory.
-        if (dir != '.') and (not os.listdir(dir)):
+        # If the directory exists and is not the root directory, and the
+        #   directory is empty, delete the directory.
+        if (dir.is_dir()) and (dir != '.') and (not os.listdir(dir)):
             dir.rmdir()
-            _printStatus(dir, "[DELETED]")
+            _printStatus(str(dir) + '/', "[DELETED]")
 
 
 def _printStatus(
-    dest: pathlib.Path,
+    dest: pathlib.Path | str,
     msg: str,
 ):
     """Print a status message to the terminal."""
